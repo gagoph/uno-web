@@ -334,22 +334,23 @@ app.post('/play', async (req, res) => {
       gameState: getGameState(game, gameId)
     });
     
+    // Si el cliente se queda sin cartas, termina la partida y notifica
+    if (game.hands[0].length === 0) {
+      game.finished = true;
+      handleRoundEnd(game, gameId, 0);
+      res.json(getGameState(game, gameId));
+      return;
+    }
+    
     // Verificar si el cliente tiene solo una carta después de jugar
     if (game.hands[0].length === 1) {
       sendWsUpdate(gameId, {
         type: 'uno_warning',
         player: PLAYERS[0],
-        gameState: getGameState({...game, turn: currentTurn}, gameId)
+        gameState: getGameState(game, gameId)
       });
       startUnoTimer(gameId);
       // No continuar con los bots, esperar a que el cliente diga UNO
-      res.json(getGameState({...game, turn: currentTurn}, gameId));
-      return;
-    }
-    // Si el cliente se queda sin cartas, termina la partida y notifica
-    if (game.hands[0].length === 0) {
-      game.finished = true;
-      handleRoundEnd(game, gameId, 0);
       res.json(getGameState(game, gameId));
       return;
     }
@@ -376,15 +377,33 @@ app.post('/draw', async (req, res) => {
     game.turn = nextTurnWithDirection(game.turn, 4, game.direction);
   }
   
+  const isCardPlayable = isCardValid(card, discardPile, currentColor);
+  
   sendWsUpdate(gameId, {
     type: 'client_draw_from_deck',
     player: PLAYERS[0],
     card,
     gameState: getGameState(game, gameId)
   });
-  await simulateBotsWithDelay(game, gameId);
   
-  res.json({ card, clientCards: game.hands[0], gameState: getGameState(game, gameId) });
+  if (isCardPlayable) {
+    // Si la carta es jugable, el turno sigue siendo del jugador
+    res.json({ 
+      card, 
+      clientCards: game.hands[0], 
+      gameState: getGameState(game, gameId),
+      canPlayDrawnCard: true 
+    });
+  } else {
+    // Si la carta no es jugable, pasa el turno a los bots
+    await simulateBotsWithDelay(game, gameId);
+    res.json({ 
+      card, 
+      clientCards: game.hands[0], 
+      gameState: getGameState(game, gameId),
+      canPlayDrawnCard: false 
+    });
+  }
 });
 
 // Endpoint para decir UNO
@@ -405,6 +424,8 @@ app.post('/uno', async (req, res) => {
   await simulateBotsWithDelay(game, gameId);
   res.json({ success: true, gameState: getGameState(game, gameId) });
 });
+
+
 
 // Endpoint para iniciar una nueva ronda manteniendo los puntajes
 app.post('/new-round', (req, res) => {
