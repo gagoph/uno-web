@@ -61,14 +61,14 @@ body {
 
 @keyframes circle-glow {
     0% {
-        box-shadow: 
-            0 0 30px rgba(255, 255, 255, 0.3),
-            inset 0 0 30px rgba(255, 255, 255, 0.1);
+        box-shadow:
+                0 0 30px rgba(255, 255, 255, 0.3),
+                inset 0 0 30px rgba(255, 255, 255, 0.1);
     }
     100% {
-        box-shadow: 
-            0 0 50px rgba(255, 255, 255, 0.5),
-            inset 0 0 50px rgba(255, 255, 255, 0.2);
+        box-shadow:
+                0 0 50px rgba(255, 255, 255, 0.5),
+                inset 0 0 50px rgba(255, 255, 255, 0.2);
     }
 }
 
@@ -114,6 +114,14 @@ body {
     background-image: radial-gradient(circle at center center, #ffcccc, #fdf5f5), repeating-radial-gradient(circle at center center, #ffcccc, #ffcccc, 10px, transparent 20px, transparent 10px);
     background-blend-mode: multiply;
     overflow: hidden;
+}
+
+#restart-game-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    font-size: 12px;
 }
 
 .player-area {
@@ -201,9 +209,9 @@ body {
 
 .card.back {
     background: repeating-linear-gradient(
-        135deg,
-        #222 0 10px,
-        #444 10px 20px
+            135deg,
+            #222 0 10px,
+            #444 10px 20px
     );
     color: #fff;
     border: 2px solid #fff;

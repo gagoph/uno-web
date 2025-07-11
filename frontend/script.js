@@ -15,7 +15,7 @@ function translatePlayerName(backendName) {
 function getColorValue(color) {
     const colors = {
         'red': '#e53935',
-        'blue': '#1e88e5', 
+        'blue': '#1e88e5',
         'green': '#43a047',
         'yellow': '#fbc02d'
     };
@@ -26,14 +26,14 @@ function getColorValue(color) {
 function getCardDescription(card) {
     const colorNames = {
         'red': 'roja',
-        'blue': 'azul', 
+        'blue': 'azul',
         'green': 'verde',
         'yellow': 'amarilla',
         'wild': 'comodín'
     };
-    
+
     const color = colorNames[card.color] || card.color;
-    
+
     if (card.type === 'number') {
         return `${color} ${card.value}`;
     } else if (card.type === 'wild' || card.type === 'wild4') {
@@ -135,17 +135,17 @@ async function apiCall(endpoint, method = 'GET', data = null) {
                 'Content-Type': 'application/json',
             }
         };
-        
+
         if (data) {
             options.body = JSON.stringify(data);
         }
-        
+
         const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         return await response.json();
     } catch (error) {
         console.error('API call failed:', error);
@@ -158,10 +158,10 @@ async function startNewGame() {
         const response = await apiCall('/start', 'POST');
         currentGameId = response.gameId;
         gameState = response;
-        
+
         // Conectar WebSocket
         connectWebSocket();
-        
+
         updateUI();
         return response;
     } catch (error) {
@@ -173,9 +173,9 @@ function connectWebSocket() {
     if (ws) {
         ws.close();
     }
-    
+
     ws = new WebSocket('ws://localhost:3001');
-    
+
     ws.onopen = () => {
         if (currentGameId) {
             ws.send(JSON.stringify({
@@ -184,7 +184,7 @@ function connectWebSocket() {
             }));
         }
     };
-    
+
     ws.onmessage = (event) => {
         try {
             const data = JSON.parse(event.data);
@@ -193,11 +193,11 @@ function connectWebSocket() {
             // Error parsing WebSocket message
         }
     };
-    
+
     ws.onclose = () => {
         // WebSocket desconectado
     };
-    
+
     ws.onerror = (error) => {
         // WebSocket error
     };
@@ -208,42 +208,42 @@ function handleWebSocketMessage(data) {
         gameState = data.gameState;
         updateUI();
     }
-    
+
     switch (data.type) {
         case 'subscribed':
             break;
-            
+
         case 'client_play':
             break;
-            
+
         case 'bot_play':
             break;
-            
+
         case 'client_draw_from_deck':
             break;
-            
+
         case 'bot_draw_from_deck':
             break;
-            
+
         case 'draw_penalty':
             break;
-            
+
         case 'uno_penalty':
             showNotification(`❌ ${translatePlayerName(data.player)} no dijo UNO a tiempo`, 'error');
             break;
-            
+
         case 'uno_warning':
             showNotification('⚠️ ¡Tienes una carta! Di UNO antes de que pasen 4 segundos', 'warning');
             break;
-            
+
         case 'client_uno':
             showNotification('🎉 ¡UNO!', 'info');
             break;
-            
+
         case 'bot_uno':
             showNotification(`🤖 ${translatePlayerName(data.player)} dijo UNO`, 'info');
             break;
-            
+
         case 'round_score':
             if (data.gameState && data.gameState.finished) {
                 showNotification(`🏆 ¡${translatePlayerName(data.winner)} ha ganado el juego!`, 'info');
@@ -251,7 +251,7 @@ function handleWebSocketMessage(data) {
                 showNotification(`📊 ${translatePlayerName(data.winner)} ganó la ronda`, 'info');
             }
             break;
-            
+
         default:
             break;
     }
@@ -261,7 +261,7 @@ async function playCard(card, chosenColor = null) {
     if (isPlayingCard) {
         return;
     }
-    
+
     try {
         isPlayingCard = true;
         const requestData = {
@@ -270,12 +270,12 @@ async function playCard(card, chosenColor = null) {
             chosenColor: chosenColor
         };
         const response = await apiCall('/play', 'POST', requestData);
-        
+
         gameState = response;
         updateUI();
-        
 
-        
+
+
         return response;
     } catch (error) {
         throw error;
@@ -288,23 +288,23 @@ async function drawCard() {
     if (isDrawingCard) {
         return;
     }
-    
+
     try {
         isDrawingCard = true;
         const response = await apiCall('/draw', 'POST', {
             gameId: currentGameId
         });
-        
+
         gameState = response.gameState;
         updateUI();
-        
 
-        
+
+
         // Si la carta robada es jugable, mostrar opción para jugarla
         if (response.canPlayDrawnCard && response.card) {
             showPlayDrawnCardOption(response.card);
         }
-        
+
         return response;
     } catch (error) {
         throw error;
@@ -333,18 +333,18 @@ function showPlayDrawnCardOption(card) {
         z-index: 1000;
         box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     `;
-    
+
     playButton.addEventListener('click', () => {
         playDrawnCard(card);
         document.body.removeChild(playButton);
     });
-    
+
     setTimeout(() => {
         if (document.body.contains(playButton)) {
             document.body.removeChild(playButton);
         }
     }, 5000);
-    
+
     document.body.appendChild(playButton);
 }
 
@@ -356,7 +356,7 @@ async function playDrawnCard(card) {
             type: card.type,
             value: card.value
         };
-        
+
         if (card.type === 'wild' || card.type === 'wild4') {
             waitingForColor = true;
             currentWildCard = card;
@@ -404,7 +404,7 @@ function updateUI() {
     if (!gameState) {
         return;
     }
-    
+
     if (gameState.discardPile && lastDiscardPileId !== gameState.discardPile.id) {
         lastDiscardPileId = gameState.discardPile.id;
     }
@@ -414,7 +414,7 @@ function updateUI() {
     renderCenterArea();
     updateTurnIndicator();
     updateUnoButton();
-    
+
     if (gameState.finished) {
         showVictoryModal();
     }
@@ -423,10 +423,10 @@ function updateUI() {
 function renderPlayerHand() {
     const playerArea = document.getElementById('player-area');
     const playerName = document.getElementById('player-name');
-    
+
     if (gameState.clientCards) {
         playerName.textContent = 'Tú';
-        
+
         // Buscar o crear el contenedor de la mano
         let handContainer = playerArea.querySelector('.hand');
         if (!handContainer) {
@@ -434,10 +434,10 @@ function renderPlayerHand() {
             handContainer.className = 'hand';
             playerArea.appendChild(handContainer);
         }
-        
+
         // Limpiar cartas existentes
         handContainer.innerHTML = '';
-        
+
         // Renderizar cartas del jugador
         gameState.clientCards.forEach((cardData, index) => {
             const card = new Card(cardData.id, cardData.color, cardData.type, cardData.value);
@@ -453,11 +453,11 @@ function renderOpponentHands() {
         document.getElementById('opponent-area-2'),
         document.getElementById('opponent-area-3')
     ];
-    
+
     opponentAreas.forEach(area => {
         area.innerHTML = '';
     });
-    
+
     if (gameState.otherPlayers) {
         gameState.otherPlayers.forEach((player, index) => {
             if (index < opponentAreas.length) {
@@ -478,7 +478,7 @@ function renderOpponentHands() {
 function renderCenterArea() {
     const deckElement = document.getElementById('deck');
     const discardPileElement = document.getElementById('discard-pile');
-    
+
     if (gameState.discardPile) {
         discardPileElement.innerHTML = '';
         const card = new Card(
@@ -487,14 +487,14 @@ function renderCenterArea() {
             gameState.discardPile.type,
             gameState.discardPile.value
         );
-        
+
         if ((card.type === 'wild' || card.type === 'wild4') && gameState.currentColor) {
             card.chosenColor = gameState.currentColor;
         }
-        
+
         const cardElement = createCardElement(card, 0, false);
         discardPileElement.appendChild(cardElement);
-        
+
         if (gameState.currentColor && gameState.currentColor !== card.color) {
             const colorIndicator = document.createElement('div');
             colorIndicator.className = `color-indicator ${gameState.currentColor}`;
@@ -521,7 +521,7 @@ function renderCenterArea() {
 
 function updateTurnIndicator() {
     const turnIndicator = document.getElementById('turn-indicator');
-    
+
     if (gameState.turn === 0) {
         turnIndicator.textContent = 'Tu turno';
         turnIndicator.className = 'turn-indicator player-turn';
@@ -534,12 +534,12 @@ function updateTurnIndicator() {
 
 function updateUnoButton() {
     const unoButton = document.getElementById('uno-button');
-    
-    const canSayUno = gameState.turn === 0 && 
-                     gameState.clientCards && 
-                     gameState.clientCards.length === 1 && 
-                     !gameState.finished;
-    
+
+    const canSayUno = gameState.turn === 0 &&
+        gameState.clientCards &&
+        gameState.clientCards.length === 1 &&
+        !gameState.finished;
+
     if (canSayUno) {
         unoButton.disabled = false;
         unoButton.style.opacity = '1';
@@ -557,7 +557,7 @@ function createCardElement(card, index, isPlayerCard) {
     const cardElement = document.createElement('div');
     cardElement.className = card.getCssClasses();
     cardElement.innerHTML = card.getDisplayText();
-    
+
     if (isPlayerCard && gameState.turn === 0 && !gameState.finished) {
         const isValid = isCardValidForPlay(card);
         if (isValid) {
@@ -568,32 +568,32 @@ function createCardElement(card, index, isPlayerCard) {
             cardElement.style.opacity = '0.5';
         }
     }
-    
+
     return cardElement;
 }
 
 // Función para verificar si una carta es válida para jugar
 function isCardValidForPlay(card) {
     if (!gameState || !gameState.discardPile) return false;
-    
+
     const discardPile = gameState.discardPile;
     const currentColor = gameState.currentColor;
-    
+
     const targetColor = (discardPile.color === 'wild') ? currentColor : discardPile.color;
-    
+
     const colorMatch = card.color === targetColor;
-    
+
     const valueMatch = (card.type === 'number' && discardPile.type === 'number' && card.value === discardPile.value) ||
-                      (card.type !== 'number' && card.type === discardPile.type);
-    
+        (card.type !== 'number' && card.type === discardPile.type);
+
     const isWild = card.color === 'wild';
-    
+
     return colorMatch || valueMatch || isWild;
 }
 
 function handleCardClick(card, index) {
     if (gameState.turn !== 0 || gameState.finished) return;
-    
+
     if (card.type === 'wild' || card.type === 'wild4') {
         waitingForColor = true;
         currentWildCard = card;
@@ -674,7 +674,7 @@ function selectColor(color) {
 function showVictoryModal() {
     const victoryModal = document.getElementById('victory-modal');
     const victoryMessage = document.getElementById('victory-message');
-    
+
     if (gameState.scores) {
         const maxScore = Math.max(...gameState.scores);
         const winnerIndex = gameState.scores.indexOf(maxScore);
@@ -684,7 +684,7 @@ function showVictoryModal() {
     } else {
         victoryMessage.textContent = '¡Juego terminado!';
     }
-    
+
     victoryModal.classList.remove('hidden');
 }
 
@@ -707,9 +707,9 @@ function showNotification(message, type = 'info') {
         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         animation: notification-slide-in 0.3s ease-out;
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
         if (document.body.contains(notification)) {
             notification.style.animation = 'notification-slide-out 0.3s ease-in';
@@ -739,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Error al iniciar el juego. Verifica que el servidor esté ejecutándose.');
             });
     });
-    
+
     // Botón UNO
     document.getElementById('uno-button').addEventListener('click', () => {
         sayUno()
@@ -749,20 +749,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error saying UNO:', error);
             });
     });
-    
+
     // Botón de robar carta
     document.getElementById('draw-button').addEventListener('click', () => {
         if (gameState && gameState.turn === 0 && !gameState.finished) {
-                    drawCard()
-            .then(() => {
-                // Log ya se maneja en la función drawCard
-            })
-            .catch(error => {
-                console.error('Error drawing card:', error);
-            });
+            drawCard()
+                .then(() => {
+                    // Log ya se maneja en la función drawCard
+                })
+                .catch(error => {
+                    console.error('Error drawing card:', error);
+                });
         }
     });
-    
+
+    // Botón "Reiniciar Juego"
+    document.getElementById('restart-game-btn').addEventListener('click', () => {
+        if (confirm('¿Estás seguro de que quieres reiniciar el juego? Se perderá el progreso actual.')) {
+            startNewGame()
+                .then(() => {
+                    console.log('Game restarted');
+                    // Ocultar cualquier modal o notificación activa al reiniciar el juego
+                    document.getElementById('victory-modal').classList.add('hidden');
+                    hideColorSelector();
+                    // También podrías querer limpiar notificaciones activas si las hay
+                    const notifications = document.querySelectorAll('.notification');
+                    notifications.forEach(n => n.remove());
+                })
+                .catch(error => {
+                    console.error('Error restarting game:', error);
+                    alert('Error al reiniciar el juego. Por favor, inténtalo de nuevo.');
+                });
+        }
+    });
+
     // Botón "Jugar de nuevo"
     document.getElementById('play-again-btn').addEventListener('click', () => {
         document.getElementById('victory-modal').classList.add('hidden');
@@ -774,18 +794,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error starting new round:', error);
             });
     });
-    
+
     // Tecla para robar carta
     document.addEventListener('keydown', (event) => {
         if (event.key === 'd' || event.key === 'D') {
             if (gameState && gameState.turn === 0 && !gameState.finished) {
-                        drawCard()
-            .then(() => {
-                // Log ya se maneja en la función drawCard
-            })
-            .catch(error => {
-                console.error('Error drawing card:', error);
-            });
+                drawCard()
+                    .then(() => {
+                        // Log ya se maneja en la función drawCard
+                    })
+                    .catch(error => {
+                        console.error('Error drawing card:', error);
+                    });
             }
         }
     });
